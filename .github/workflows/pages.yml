@@ -78,6 +78,17 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Static HTML export with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next export
+      - name: Debug: Check Pages actions for deprecated deps
+        run: |
+          echo "Checking actions/upload-pages-artifact@v1 action metadata for references to upload-artifact@v3"
+          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v1/action.yml | sed -n '1,200p' || echo "unable to fetch upload-pages-artifact@v1 metadata"
+          echo "----"
+          echo "Checking actions/deploy-pages@v1 action metadata for references to upload-artifact@v3"
+          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v1/action.yml | sed -n '1,200p' || echo "unable to fetch deploy-pages@v1 metadata"
+          echo "----"
+          echo "Searching these metadata files for 'upload-artifact'"
+          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v1/action.yml 2>/dev/null | grep -n "upload-artifact" || true
+          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v1/action.yml 2>/dev/null | grep -n "upload-artifact" || true
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
