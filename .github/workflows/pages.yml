@@ -80,17 +80,17 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.runner }} next export
       - name: "Debug: Check Pages actions for deprecated deps"
         run: |
-          echo "Checking actions/upload-pages-artifact@v2 action metadata for references to upload-artifact@v3"
-          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v2/action.yml | sed -n '1,200p' || echo "unable to fetch upload-pages-artifact@v2 metadata"
+          echo "Checking actions/upload-pages-artifact@v3 action metadata for references to upload-artifact@v3"
+          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v3/action.yml | sed -n '1,200p' || echo "unable to fetch upload-pages-artifact@v3 metadata"
           echo "----"
-          echo "Checking actions/deploy-pages@v2 action metadata for references to upload-artifact@v3"
-          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v2/action.yml | sed -n '1,200p' || echo "unable to fetch deploy-pages@v2 metadata"
+          echo "Checking actions/deploy-pages@v4 action metadata for references to upload-artifact@v3"
+          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml | sed -n '1,200p' || echo "unable to fetch deploy-pages@v4 metadata"
           echo "----"
           echo "Searching these metadata files for 'upload-artifact'"
-          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v2/action.yml 2>/dev/null | grep -n "upload-artifact" || true
-          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v2/action.yml 2>/dev/null | grep -n "upload-artifact" || true
+          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v3/action.yml 2>/dev/null | grep -n "upload-artifact" || true
+          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml 2>/dev/null | grep -n "upload-artifact" || true
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
 
@@ -104,4 +104,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
