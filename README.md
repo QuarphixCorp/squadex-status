@@ -77,3 +77,4 @@ update the cron time in the following line.
 
 # Contributing
 Feel free to submit pull requests and/or file issues for bugs and suggestions.
+# squadEx
