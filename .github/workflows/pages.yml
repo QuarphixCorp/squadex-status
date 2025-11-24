@@ -61,7 +61,7 @@ jobs:
           #
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
-          enablement: true
+          enablement: "true"
       - name: Restore cache
         uses: actions/cache@v4
         with:
@@ -78,7 +78,7 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Static HTML export with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next export
-      - name: Debug: Check Pages actions for deprecated deps
+      - name: "Debug: Check Pages actions for deprecated deps"
         run: |
           echo "Checking actions/upload-pages-artifact@v2 action metadata for references to upload-artifact@v3"
           curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v2/action.yml | sed -n '1,200p' || echo "unable to fetch upload-pages-artifact@v2 metadata"
