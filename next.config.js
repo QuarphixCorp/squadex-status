@@ -1,27 +1,19 @@
 /** @type {import('next').NextConfig} */
+// NOTE: Avoid optional chaining / modern syntax so GitHub Actions (espree) parser can read this file.
+// When building on GitHub Pages for a repository (project) site, assets must be served under /<repoName>/.
+// We derive repoName defensively to keep the parser happy.
+var repoName = "";
+if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
+  var parts = process.env.GITHUB_REPOSITORY.split("/");
+  if (parts.length > 1) repoName = parts[1];
+}
+var basePath = repoName ? "/" + repoName : "";
 
-const production = process.env.NODE_ENV === "production";
-// Detect GitHub Pages environment: GITHUB_ACTIONS set and repository name available
-const isPages = !!process.env.GITHUB_ACTIONS;
-const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1] || "";
-// For project pages the site is served under /<repoName>/, so we need matching basePath & assetPrefix
-const basePath = isPages && repoName ? `/${repoName}` : "";
-
-/**
- * Next.js configuration tuned for static export on GitHub Pages:
- * - basePath + assetPrefix ensure chunk/script/css paths resolve under the project subdirectory.
- * - images.unoptimized disables the Image Optimization API (required for next export).
- * - output: 'export' integrates static HTML export into the build step (no separate next export needed).
- * - trailingSlash ensures directory index.html files work reliably on Pages.
- */
-const nextConfig = {
-  basePath,
+module.exports = {
+  basePath: basePath,
   assetPrefix: basePath || "/",
   reactStrictMode: true,
   swcMinify: true,
-  images: { unoptimized: true },
-  output: "export",
+  // Removed images.unoptimized because we replaced next/image with standard <img> for static export.
   trailingSlash: true,
 };
-
-module.exports = nextConfig;
