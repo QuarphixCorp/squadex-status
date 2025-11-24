@@ -12,7 +12,8 @@ function useSystemStatus() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch("./urls.cfg");
+                // urls.cfg lives in the public folder and is served from the site root
+                const response = await fetch("/urls.cfg");
                 const configText = await response.text();
                 const configLines = configText.split("\n");
                 const services: ServiceStatus[] = [];
@@ -65,11 +66,27 @@ function useSystemStatus() {
 }
 
 async function logs(key: string): Promise<ServiceStatus> {
-    const response = await fetch(`https://raw.githubusercontent.com/Sandilenkosie/squadEx/main/public/status/${key}_report.log`);
-    const text = await response.text();
-    const lines = text.split("\n");
+    // read logs from the local public/status folder served at /status
+    const resp = await fetch(`/status/${key}_report.log`);
+    if (!resp.ok) {
+        // missing or inaccessible log -> treat as unknown/empty so it doesn't incorrectly count as a failed service
+        return {
+            name: key,
+            status: "",
+            date: undefined,
+        };
+    }
+    const text = await resp.text();
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) {
+        return {
+            name: key,
+            status: "",
+            date: undefined,
+        };
+    }
     try {
-        const line = lines[lines.length - 2];
+        const line = lines[lines.length - 1];
         const [created_at, status, _] = line.split(", ");
         return {
             name: key,
@@ -79,7 +96,7 @@ async function logs(key: string): Promise<ServiceStatus> {
     } catch (e) {
         return {
             name: key,
-            status: "unknown",
+            status: "",
             date: undefined,
         };
     }
