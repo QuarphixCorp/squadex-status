@@ -13,8 +13,10 @@ function useServices() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                // use absolute path so this works from static HTML pages and exported sites
-                const response = await fetch("/urls.cfg");
+                // use relative path so this works when the site is hosted under a subpath
+                // (GitHub Pages project sites). This matches how `useSystemStatus` loads
+                // the same file from `public/`.
+                const response = await fetch("./urls.cfg");
                 const configText = await response.text();
                 const configLines = configText.split("\n");
 
@@ -47,9 +49,14 @@ function useServices() {
 }
 
 async function logs(key: string): Promise<LogDaySummary[]> {
-    const response = await fetch(`https://raw.githubusercontent.com/QuarphixCorp/squadex-status/main/public/status/${key}_report.log`);
-
-    const text = await response.text();
+    // read logs from the local public/status folder. Use a relative path so the
+    // files are correctly resolved when the site is hosted under a subpath.
+    const resp = await fetch(`./status/${key}_report.log`);
+    if (!resp.ok) {
+        // missing or inaccessible log -> return empty array so callers treat it as unknown
+        return [];
+    }
+    const text = await resp.text();
     const lines = text.split("\n");
     const logs: Log[] = [];
     const logDaySummary: LogDaySummary[] = [];
