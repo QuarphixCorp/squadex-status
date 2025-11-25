@@ -99,7 +99,9 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    # Use a self-hosted runner for deployment as well
+    # Ensure a self-hosted runner is registered and online for this repository/org
+    runs-on: self-hosted
     needs: build
     steps:
       - name: Deploy to GitHub Pages
