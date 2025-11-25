@@ -22,7 +22,7 @@ Go to `src > incidents > hooks > useIncidents.tsx` file and update the url with 
 
 Replace **mehatab/fettle** with your **username/repo-name**
 ```
-https://api.github.com/repos/Sandilenkosie/squadEx/issues?per_page=20&state=all&labels=incident
+https://api.github.com/repos/QuarphixCorp/squadex-status/issues?per_page=20&state=all&labels=incident
 ```
 
 ## Service status URL update
@@ -30,14 +30,14 @@ Go to `src > services > hooks > useServices.tsx` file and update the url with yo
 
 Replace **mehatab/fettle** with your **username/repo-name**
 ```
-https://raw.githubusercontent.com/Sandilenkosie/squadEx/main/public/status/${key}_report.log
+https://raw.githubusercontent.com/QuarphixCorp/squadex-status/main/public/status/${key}_report.log
 ```
 
 Go to `src > services > hooks > useSystemStatus.tsx` file and update the url with your repository url.
 
 Replace **mehatab/fettle** with your **username/repo-name**
 ```
-https://raw.githubusercontent.com/Sandilenkosie/squadEx/main/public/status/${key}_report.log
+https://raw.githubusercontent.com/QuarphixCorp/squadex-status/main/public/status/${key}_report.log
 ```
 
 ## Deployment setup
