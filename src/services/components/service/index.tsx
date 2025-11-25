@@ -10,13 +10,13 @@ interface ServiceItemProps {
 const ServiceItem: FunctionComponent<ServiceItemProps> = ({ item }) => {
     const StatusName = () => {
         if (item?.status === Status.OPERATIONAL) {
-            return <span className={"text-green-500"} aria-hidden>OPERATIONAL</span>
+            return <span className={"bg-green-500 px-2 py-1 rounded-xl text-white"} aria-hidden>OPERATIONAL</span>
         } else if(item?.status === Status.PARTIAL_OUTAGE) {
-            return <span className={"text-orange-400"} aria-hidden>PARTIAL OUTAGE</span>
+            return <span className={"bg-orange-400 px-2 py-1 rounded-xl text-white"} aria-hidden>PARTIAL OUTAGE</span>
         } else if(item?.status === Status.OUTAGE) {
-            return <span className={"text-red-500"} aria-hidden>OUTAGE</span>
+            return <span className={"bg-red-500 px-2 py-1 rounded-xl text-white"} aria-hidden>OUTAGE</span>
         } else {
-            return <span className={"text-gray-400"} aria-hidden></span>
+            return <span className={"bg-gray-400 px-2 py-1 rounded-xl text-white"} aria-hidden>UNKNOWN</span>
         }
     }
 
@@ -40,14 +40,14 @@ const ServiceItem: FunctionComponent<ServiceItemProps> = ({ item }) => {
                             </svg>
                         </button>
                     </div>
-                    <p className='text-xs text-gray-500'> <StatusName /> </p>
+                    <p className='text-xs'> <StatusName /> </p>
                 </div>
             </div>
 
             {/* Expanded panel injected when the name-chevron is toggled. This contains the pasted block's key pieces (card body + Recent incident). */}
             {panelOpen && (
                 <div className="mx-px mt-6 md:ml-60 md:mr-60">
-                    <StatusSection />
+                    <StatusSection serviceId={item.id} />
                 </div>
             )}
 

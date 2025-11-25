@@ -13,7 +13,8 @@ function useServices() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch("./urls.cfg");
+                // use absolute path so this works from static HTML pages and exported sites
+                const response = await fetch("/urls.cfg");
                 const configText = await response.text();
                 const configLines = configText.split("\n");
 
@@ -54,7 +55,9 @@ async function logs(key: string): Promise<LogDaySummary[]> {
     const logDaySummary: LogDaySummary[] = [];
 
     lines.forEach((line: string) => {
+        if (!line || line.trim().length === 0) return; // skip empty lines
         const [created_at, status, response_time] = line.split(", ");
+        if (!created_at) return;
         logs.push({ id: created_at, response_time, status, created_at })
     })
 
