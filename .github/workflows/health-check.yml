@@ -1,16 +1,33 @@
 name: Scheduled Health Check
 
-# Controls when the action will run.
 on:
   schedule:
-    - cron: "0 0/12 * * *"
+    # every 5 minutes (UTC)
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: health-check
+  cancel-in-progress: true
+
+permissions:
+  contents: write
 
 jobs:
-  health_check_job:
+  health-check:
     runs-on: ubuntu-latest
-    name: Check all sites
     steps:
-      - uses: actions/checkout@v4
-      - name: Run Shell Script
-        id: shell_script_run
-        run: bash ./scripts/health-check.sh
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # allow the action to use the supplied token to push
+          persist-credentials: true
+
+      - name: Give execute permission to script
+        run: chmod +x ./scripts/health-check.sh
+
+      - name: Run health check and allow push
+        env:
+          ALLOW_PUSH: 'true'
+        run: |
+          bash ./scripts/health-check.sh
