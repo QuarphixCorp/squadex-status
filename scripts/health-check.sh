@@ -179,7 +179,7 @@ do
   fi
 done
 
-if [[ $commit == true && "${ALLOW_PUSH:-}" == "true" ]]
+if [[ $commit == true ]]
 then
   echo "committing logs"
   git config --global user.name 'github-actions[bot]'
@@ -187,10 +187,4 @@ then
   git add -A --force public/status/
   git commit -am '[Automated] Update Health Check Logs'
   git push
-else
-  if [[ $commit == true ]]; then
-    echo "Commit enabled but ALLOW_PUSH != true — skipping git push (set ALLOW_PUSH=true to allow pushing)."
-  else
-    echo "Commit disabled for this remote — not committing logs."
-  fi
 fi
