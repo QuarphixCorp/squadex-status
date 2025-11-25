@@ -12,8 +12,9 @@ function useSystemStatus() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                // urls.cfg lives in the public folder and is served from the site root
-                const response = await fetch("/urls.cfg");
+                // urls.cfg lives in the public folder. Use a relative path so the app works
+                // when served from a subpath (GitHub Pages, GitHub project pages, etc.).
+                const response = await fetch("./urls.cfg");
                 const configText = await response.text();
                 const configLines = configText.split("\n");
                 const services: ServiceStatus[] = [];
@@ -66,14 +67,15 @@ function useSystemStatus() {
 }
 
 async function logs(key: string): Promise<ServiceStatus> {
-    // read logs from the local public/status folder served at /status
-    const resp = await fetch(`/status/${key}_report.log`);
+    // read logs from the local public/status folder. Use a relative path so the
+    // files are correctly resolved when the site is hosted under a subpath.
+    const resp = await fetch(`./status/${key}_report.log`);
     if (!resp.ok) {
         // missing or inaccessible log -> treat as unknown/empty so it doesn't incorrectly count as a failed service
         return {
             name: key,
             status: "",
-            date: undefined,
+            date: "",
         };
     }
     const text = await resp.text();
@@ -82,7 +84,7 @@ async function logs(key: string): Promise<ServiceStatus> {
         return {
             name: key,
             status: "",
-            date: undefined,
+            date: "",
         };
     }
     try {
@@ -91,13 +93,13 @@ async function logs(key: string): Promise<ServiceStatus> {
         return {
             name: key,
             status: status,
-            date: created_at,
+            date: created_at || "",
         };
     } catch (e) {
         return {
             name: key,
             status: "",
-            date: undefined,
+            date: "",
         };
     }
 }

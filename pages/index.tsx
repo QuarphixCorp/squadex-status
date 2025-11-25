@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import type { NextPage } from 'next'
-import IncidentsSection from "../src/incidents"
 import ServicesSection from "../src/services"
 import Logo from "../src/services/components/icons/Logo"
 

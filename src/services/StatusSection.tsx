@@ -1,7 +1,6 @@
 import useServices from './hooks/useServices';
 import type { NextPage } from 'next'
 import Service from './types/Service';
-import StatusView from './components/log/Status';
 
 const StatusSection: NextPage = () => {
     const [data, isServicesLoading] = useServices();
