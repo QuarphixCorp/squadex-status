@@ -12,9 +12,23 @@ declare -a URLSARRAY
 
 urlsConfig="public/urls.cfg"
 echo "Reading $urlsConfig"
-while IFS='=' read -r key url
-do
-  # skip empty lines
+# Read file line-by-line, handle CRLF, skip blank/comment lines, and split on the first '=' so we accept all URLs
+while IFS= read -r line || [ -n "$line" ]; do
+  # remove CR (for Windows-formatted files)
+  line="${line//$'\r'/}"
+  # skip empty lines and comments
+  if [[ -z "$line" ]] || [[ "$line" =~ ^# ]]; then
+    continue
+  fi
+  # split on first '='
+  key="${line%%=*}"
+  url="${line#*=}"
+  # trim whitespace around key and url
+  key="${key##+([[:space:]])}"
+  key="${key%%+([[:space:]])}"
+  url="${url##+([[:space:]])}"
+  url="${url%%+([[:space:]])}"
+  # if key is empty after trimming, skip
   if [[ -z "$key" ]]; then
     continue
   fi
@@ -59,15 +73,15 @@ try_url_attempts() {
   return 1
 }
 
-# rewrite urls.cfg from arrays (safe overwrite)
-rewrite_urls_cfg() {
+# update a single key in urls.cfg (preserve other lines and order). If the key is missing, append it.
+update_url_in_cfg() {
+  local key="$1"
+  local newurl="$2"
   local tmpfile
   tmpfile=$(mktemp) || tmpfile="${urlsConfig}.tmp"
-  for ((j=0;j<${#KEYSARRAY[@]};j++)); do
-    printf "%s=%s\n" "${KEYSARRAY[j]}" "${URLSARRAY[j]}" >> "$tmpfile"
-  done
+  awk -F'=' -v k="$key" -v v="$newurl" 'BEGIN{OFS=FS} { if(substr($0,1,1)=="#"){print; next} if($1==k){print k,v; found=1; next} print } END{ if(!found) print k"="v }' "$urlsConfig" > "$tmpfile"
   mv "$tmpfile" "$urlsConfig"
-  echo "Wrote updated $urlsConfig"
+  echo "Updated $urlsConfig: $key -> $newurl"
 }
 
 for (( index=0; index < ${#KEYSARRAY[@]}; index++ ))
@@ -140,9 +154,9 @@ do
       echo "      trying fallback: $cand"
       if read cand_http cand_time < <(try_url_attempts "$cand" 2); then
         echo "      fallback succeeded: $cand ($cand_http $cand_time)"
-        # update arrays and urls.cfg
-        URLSARRAY[index]="$cand"
-        rewrite_urls_cfg
+  # update arrays and urls.cfg (only update the single key to avoid dropping lines)
+  URLSARRAY[index]="$cand"
+  update_url_in_cfg "$key" "$cand"
         url="$cand"
         result="success"
         time_total="$cand_time"
