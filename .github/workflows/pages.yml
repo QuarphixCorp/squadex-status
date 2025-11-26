@@ -195,6 +195,31 @@ jobs:
             $d = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml' -UseBasicParsing -ErrorAction Stop
             Select-String -InputObject $d -Pattern 'upload-artifact' -SimpleMatch | ForEach-Object { Write-Output $_ }
           } catch {}
+
+      - name: Add Git Bash to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $gitPaths = @(
+            'C:\Program Files\Git\usr\bin',
+            'C:\Program Files (x86)\Git\usr\bin',
+            'C:\Program Files\Git\bin',
+            "$env:ProgramFiles\Git\usr\bin"
+          )
+          $found = $false
+          foreach ($p in $gitPaths) {
+            if (Test-Path $p) {
+              Write-Host "Prepending Git Bash path to PATH: $p"
+              # Update PATH for the remainder of the job
+              $env:PATH = "$p;$env:PATH"
+              $found = $true
+              break
+            }
+          }
+          if (-not $found) {
+            Write-Host "Git Bash not found in common locations. If this step fails, install Git for Windows on the runner or add bash to PATH."
+          }
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
