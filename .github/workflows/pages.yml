@@ -251,9 +251,10 @@ jobs:
             Write-Host "No bash.exe found in common Git locations; cannot create C:\\bin\\bash.exe"
           }
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
         with:
+          name: out
           path: ./out
 
       - name: Bash diagnostics (Windows)
@@ -276,16 +277,28 @@ jobs:
           }
           Write-Host '---- end diagnostics ----'
 
-  # Deployment job
-  deploy:
+  # Publish and deploy job (runs on Ubuntu to avoid /bin/bash issues with Pages actions)
+  publish:
+    runs-on: self-hosted
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    # Use a self-hosted runner for deployment as well
-    # Ensure a self-hosted runner is registered and online for this repository/org
-    runs-on: self-hosted
-    needs: build
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: out
+          path: ./out
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
