@@ -2,7 +2,7 @@
 #
 # To get started with Next.js see: https://nextjs.org/docs/getting-started
 #
-name: Deploy Next.js site to Pages
+name: Deploy Next.js site to GitHub Pages
 
 on:
   push:
@@ -25,124 +25,76 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Ensure /bin/bash exists
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          # Create C:\bin\bash.exe by copying Git's bash.exe if available. Many actions call /bin/bash literally.
-          $candidates = @(
-            'C:\Program Files\Git\usr\bin\bash.exe',
-            'C:\Program Files\Git\bin\bash.exe',
-            'C:\Program Files (x86)\Git\usr\bin\bash.exe',
-            "$env:ProgramFiles\Git\usr\bin\bash.exe"
-          )
-          $found = $null
-          foreach ($c in $candidates) { if (Test-Path $c) { $found = $c; break } }
-          if ($found) {
-            $destDir = 'C:\bin'
-            if (-not (Test-Path $destDir)) { New-Item -Path $destDir -ItemType Directory -Force | Out-Null }
-            $dest = Join-Path $destDir 'bash.exe'
-            try {
-              Copy-Item -Path $found -Destination $dest -Force
-              Write-Host ("Copied bash.exe to " + $dest)
-            } catch {
-              Write-Host ("Unable to copy bash.exe to " + $dest + ": " + $_)
-            }
-          } else {
-            Write-Host "No bash.exe found in common Git locations; cannot create C:\\bin\\bash.exe"
-          }
-
       - name: Detect package manager
         id: detect-package-manager
-        shell: bash
+        shell: powershell
         run: |
-          # Detect package manager and emit outputs for later steps
-          if [ -f "yarn.lock" ]; then
-            echo "manager=yarn" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=yarn" >> $GITHUB_OUTPUT
-            exit 0
-          elif [ -f "package.json" ]; then
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=ci" >> $GITHUB_OUTPUT
-            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
-            exit 0
-          else
-            echo "Unable to determine package manager"
-            exit 1
-          fi
+          $hasYarnLock = Test-Path -Path "yarn.lock"
+          $hasPkgLock  = Test-Path -Path "package-lock.json"
+          $hasPkgJson  = Test-Path -Path "package.json"
 
-      - name: Setup Node
+          if ($hasYarnLock) {
+            "package_manager=yarn"    | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "install_cmd=yarn install"| Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "run_cmd=yarn"            | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            exit 0
+          }
+          elseif ($hasPkgLock) {
+            "package_manager=npm"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "install_cmd=npm ci"      | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "run_cmd=npm run"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            exit 0
+          }
+          elseif ($hasPkgJson) {
+            "package_manager=npm"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "install_cmd=npm install" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "run_cmd=npm run"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            exit 0
+          }
+          else {
+            Write-Error "Unable to determine package manager (no package.json found)"
+            exit 1
+          }
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
 
-      - name: Ensure yarn
-        if: steps.detect-package-manager.outputs.manager == 'yarn'
-        shell: bash
+      - name: Ensure yarn (if needed)
+        if: steps.detect-package-manager.outputs.package_manager == 'yarn'
+        shell: powershell
         run: |
-          if ! command -v yarn >/dev/null 2>&1; then
-            echo 'yarn not found - installing via npm'
+          if (-not (Get-Command yarn -ErrorAction SilentlyContinue)) {
+            Write-Host 'yarn not found - installing via npm'
             npm install -g yarn
-          else
-            echo 'yarn already installed'
-          fi
+          } else {
+            Write-Host 'yarn already installed'
+          }
 
-      - name: Setup Pages
+      - name: Setup Pages (configure runner for Pages)
         id: pages
         uses: actions/configure-pages@v5
         with:
           static_site_generator: next
 
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
-
       - name: Install dependencies
-        shell: bash
-        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+        shell: powershell
+        run: ${{ steps.detect-package-manager.outputs.install_cmd }}
 
       - name: Build with Next.js
-        shell: bash
-        run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        shell: powershell
+        run: ${{ steps.detect-package-manager.outputs.run_cmd }} build
 
       - name: Static HTML export with Next.js
-        shell: bash
-        run: ${{ steps.detect-package-manager.outputs.runner }} next export
-
-      - name: "Debug: Check Pages actions for deprecated deps"
-        shell: bash
-        run: |
-          echo "Checking actions/upload-pages-artifact@v4 action metadata for references to upload-artifact@v4"
-          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v4/action.yml || echo "unable to fetch upload-pages-artifact@v4 metadata"
-          echo "----"
-          echo "Checking actions/deploy-pages@v4 action metadata for references to upload-artifact@v4"
-          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml || echo "unable to fetch deploy-pages@v4 metadata"
-          echo "----"
-          echo "Searching these metadata files for 'upload-artifact'"
-          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v4/action.yml | grep -n 'upload-artifact' || true
-          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml | grep -n 'upload-artifact' || true
+        shell: powershell
+        run: ${{ steps.detect-package-manager.outputs.run_cmd }} export
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: out
           path: ./out
-
-      - name: Bash diagnostics
-        shell: bash
-        run: |
-          echo '---- Bash diagnostics ----'
-          if command -v bash >/dev/null 2>&1; then
-            bash --version
-          else
-            echo 'bash not found'
-          fi
-          echo '---- end diagnostics ----'
 
   publish:
     runs-on: self-hosted
