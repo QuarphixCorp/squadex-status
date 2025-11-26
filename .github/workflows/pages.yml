@@ -90,11 +90,20 @@ jobs:
         shell: powershell
         run: ${{ steps.detect-package-manager.outputs.run_cmd }} export
 
+      - name: Prepare Pages artifact directory (sanitize)
+        shell: powershell
+        run: |
+          # Create a clean folder that contains only regular files (no symlinks/hardlinks)
+          Remove-Item -Recurse -Force _site -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path _site | Out-Null
+          robocopy .\out .\_site /MIR | Out-Null
+          if ($LASTEXITCODE -ge 8) { Write-Error "robocopy failed with code $LASTEXITCODE"; exit 1 }
+
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
-          path: ./out
+          path: ./_site
 
   publish:
     runs-on: self-hosted
