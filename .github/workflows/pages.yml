@@ -122,12 +122,46 @@ jobs:
           # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
-      - name: Install dependencies
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $manager = '${{ steps.detect-package-manager-windows.outputs.manager }}'
+          if (-not $manager) { $manager = '${{ steps.detect-package-manager-unix.outputs.manager }}' }
+          $command = '${{ steps.detect-package-manager-windows.outputs.command }}'
+          if (-not $command) { $command = '${{ steps.detect-package-manager-unix.outputs.command }}' }
+          Write-Host "Running: $manager $command"
+          & $manager $command
+
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
         shell: bash
         run: ${{ steps.detect-package-manager-windows.outputs.manager || steps.detect-package-manager-unix.outputs.manager }} ${{ steps.detect-package-manager-windows.outputs.command || steps.detect-package-manager-unix.outputs.command }}
-      - name: Build with Next.js
+
+      - name: Build with Next.js (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $runner = '${{ steps.detect-package-manager-windows.outputs.runner }}'
+          if (-not $runner) { $runner = '${{ steps.detect-package-manager-unix.outputs.runner }}' }
+          Write-Host "Running: $runner next build"
+          & $runner next build
+
+      - name: Build with Next.js (Unix)
+        if: runner.os != 'Windows'
         run: ${{ steps.detect-package-manager-windows.outputs.runner || steps.detect-package-manager-unix.outputs.runner }} next build
-      - name: Static HTML export with Next.js
+
+      - name: Static HTML export with Next.js (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $runner = '${{ steps.detect-package-manager-windows.outputs.runner }}'
+          if (-not $runner) { $runner = '${{ steps.detect-package-manager-unix.outputs.runner }}' }
+          Write-Host "Running: $runner next export"
+          & $runner next export
+
+      - name: Static HTML export with Next.js (Unix)
+        if: runner.os != 'Windows'
         run: ${{ steps.detect-package-manager-windows.outputs.runner || steps.detect-package-manager-unix.outputs.runner }} next export
       - name: "Debug: Check Pages actions for deprecated deps"
         run: |
