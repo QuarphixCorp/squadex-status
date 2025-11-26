@@ -25,6 +25,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Ensure /bin/bash exists
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          # Create C:\bin\bash.exe by copying Git's bash.exe if available. Many actions call /bin/bash literally.
+          $candidates = @(
+            'C:\Program Files\Git\usr\bin\bash.exe',
+            'C:\Program Files\Git\bin\bash.exe',
+            'C:\Program Files (x86)\Git\usr\bin\bash.exe',
+            "$env:ProgramFiles\Git\usr\bin\bash.exe"
+          )
+          $found = $null
+          foreach ($c in $candidates) { if (Test-Path $c) { $found = $c; break } }
+          if ($found) {
+            $destDir = 'C:\bin'
+            if (-not (Test-Path $destDir)) { New-Item -Path $destDir -ItemType Directory -Force | Out-Null }
+            $dest = Join-Path $destDir 'bash.exe'
+            try {
+              Copy-Item -Path $found -Destination $dest -Force
+              Write-Host ("Copied bash.exe to " + $dest)
+            } catch {
+              Write-Host ("Unable to copy bash.exe to " + $dest + ": " + $_)
+            }
+          } else {
+            Write-Host "No bash.exe found in common Git locations; cannot create C:\\bin\\bash.exe"
+          }
+
       - name: Detect package manager
         id: detect-package-manager
         shell: bash
