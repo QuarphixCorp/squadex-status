@@ -162,17 +162,39 @@ jobs:
       - name: Static HTML export with Next.js (Unix)
         if: runner.os != 'Windows'
         run: ${{ steps.detect-package-manager-windows.outputs.runner || steps.detect-package-manager-unix.outputs.runner }} next export
+      
       - name: "Debug: Check Pages actions for deprecated deps"
+        shell: powershell
         run: |
-          echo "Checking actions/upload-pages-artifact@v3 action metadata for references to upload-artifact@v3"
-          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v3/action.yml | sed -n '1,200p' || echo "unable to fetch upload-pages-artifact@v3 metadata"
-          echo "----"
-          echo "Checking actions/deploy-pages@v4 action metadata for references to upload-artifact@v3"
-          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml | sed -n '1,200p' || echo "unable to fetch deploy-pages@v4 metadata"
-          echo "----"
-          echo "Searching these metadata files for 'upload-artifact'"
-          curl -fsSL https://raw.githubusercontent.com/actions/upload-pages-artifact/v3/action.yml 2>/dev/null | grep -n "upload-artifact" || true
-          curl -fsSL https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml 2>/dev/null | grep -n "upload-artifact" || true
+          Write-Host "Checking actions/upload-pages-artifact@v3 action metadata for references to upload-artifact@v3"
+          try {
+            $resp = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/actions/upload-pages-artifact/v3/action.yml' -UseBasicParsing -ErrorAction Stop
+            $lines = $resp -split "`n"
+            $limit = [Math]::Min($lines.Count, 200)
+            $lines[0..($limit-1)] | ForEach-Object { Write-Output $_ }
+          } catch {
+            Write-Host "unable to fetch upload-pages-artifact@v3 metadata"
+          }
+          Write-Host "----"
+          Write-Host "Checking actions/deploy-pages@v4 action metadata for references to upload-artifact@v3"
+          try {
+            $resp = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml' -UseBasicParsing -ErrorAction Stop
+            $lines = $resp -split "`n"
+            $limit = [Math]::Min($lines.Count, 200)
+            $lines[0..($limit-1)] | ForEach-Object { Write-Output $_ }
+          } catch {
+            Write-Host "unable to fetch deploy-pages@v4 metadata"
+          }
+          Write-Host "----"
+          Write-Host "Searching these metadata files for 'upload-artifact'"
+          try {
+            $u = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/actions/upload-pages-artifact/v3/action.yml' -UseBasicParsing -ErrorAction Stop
+            Select-String -InputObject $u -Pattern 'upload-artifact' -SimpleMatch | ForEach-Object { Write-Output $_ }
+          } catch {}
+          try {
+            $d = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/actions/deploy-pages/v4/action.yml' -UseBasicParsing -ErrorAction Stop
+            Select-String -InputObject $d -Pattern 'upload-artifact' -SimpleMatch | ForEach-Object { Write-Output $_ }
+          } catch {}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
