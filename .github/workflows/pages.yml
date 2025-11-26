@@ -77,7 +77,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: ${{ coalesce(steps.detect-package-manager-windows.outputs.manager, steps.detect-package-manager-unix.outputs.manager) }}
+          cache: ${{ steps.detect-package-manager-windows.outputs.manager || steps.detect-package-manager-unix.outputs.manager }}
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
@@ -100,11 +100,11 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         shell: bash
-        run: ${{ coalesce(steps.detect-package-manager-windows.outputs.manager, steps.detect-package-manager-unix.outputs.manager) }} ${{ coalesce(steps.detect-package-manager-windows.outputs.command, steps.detect-package-manager-unix.outputs.command) }}
+        run: ${{ steps.detect-package-manager-windows.outputs.manager || steps.detect-package-manager-unix.outputs.manager }} ${{ steps.detect-package-manager-windows.outputs.command || steps.detect-package-manager-unix.outputs.command }}
       - name: Build with Next.js
-        run: ${{ coalesce(steps.detect-package-manager-windows.outputs.runner, steps.detect-package-manager-unix.outputs.runner) }} next build
+        run: ${{ steps.detect-package-manager-windows.outputs.runner || steps.detect-package-manager-unix.outputs.runner }} next build
       - name: Static HTML export with Next.js
-        run: ${{ coalesce(steps.detect-package-manager-windows.outputs.runner, steps.detect-package-manager-unix.outputs.runner) }} next export
+        run: ${{ steps.detect-package-manager-windows.outputs.runner || steps.detect-package-manager-unix.outputs.runner }} next export
       - name: "Debug: Check Pages actions for deprecated deps"
         run: |
           echo "Checking actions/upload-pages-artifact@v3 action metadata for references to upload-artifact@v3"
