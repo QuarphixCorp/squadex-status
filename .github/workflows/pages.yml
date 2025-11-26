@@ -33,7 +33,7 @@ jobs:
       - name: Detect package manager (Windows)
         id: detect-package-manager-windows
         if: runner.os == 'Windows'
-        shell: pwsh
+        shell: powershell
         run: |
           # Use PowerShell on Windows runners to avoid path translation issues with MSYS/WSL bash.
           if (Test-Path -Path 'yarn.lock') {
