@@ -23,11 +23,14 @@ jobs:
           # allow the action to use the supplied token to push
           persist-credentials: true
 
-      - name: Give execute permission to script
+      - name: Give execute permission to script (non-Windows only)
+        if: runner.os != 'Windows'
+        shell: bash
         run: chmod +x ./scripts/health-check.sh
 
       - name: Run health check and allow push
         env:
           ALLOW_PUSH: 'true'
+        shell: bash
         run: |
           bash ./scripts/health-check.sh
