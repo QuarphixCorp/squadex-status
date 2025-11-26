@@ -237,15 +237,15 @@ jobs:
           if ($found) {
             $destDir = 'C:\bin'
             if (-not (Test-Path $destDir)) {
-              try { New-Item -Path $destDir -ItemType Directory -Force | Out-Null } catch { Write-Host "Unable to create $destDir: $_" }
+              try { New-Item -Path $destDir -ItemType Directory -Force | Out-Null } catch { Write-Host ("Unable to create " + $destDir + ": " + $_) }
             }
             $dest = Join-Path $destDir 'bash.exe'
             try {
               Copy-Item -Path $found -Destination $dest -Force
-              Write-Host "Copied bash.exe to $dest"
+              Write-Host ("Copied bash.exe to " + $dest)
             } catch {
-              Write-Host "Unable to copy bash.exe to $dest: $_"
-              Write-Host "You may need to install Git for Windows or run the runner with an account that can write to C:\"
+              Write-Host ("Unable to copy bash.exe to " + $dest + ": " + $_)
+              Write-Host 'You may need to install Git for Windows or run the runner with an account that can write to C:\'
             }
           } else {
             Write-Host "No bash.exe found in common Git locations; cannot create C:\\bin\\bash.exe"
