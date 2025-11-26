@@ -69,7 +69,8 @@ jobs:
             Remove-Item -Recurse -Force '_site'
           }
           New-Item -ItemType Directory -Path '_site' | Out-Null
-          robocopy '.\out' '.\_site' /MIR /COPY:DAT /R:2 /W:2 | Out-Null
+          # Run robocopy via cmd to capture exit code reliably
+          cmd /c robocopy ".\out" ".\_site" /MIR /COPY:DAT /R:2 /W:2 | Out-Null
           $rc = $LASTEXITCODE
           Write-Host "robocopy exit code: $rc"
           if ($rc -ge 8) {
@@ -78,6 +79,9 @@ jobs:
           }
           # Ensure Jekyll processing is disabled
           New-Item -ItemType File -Path (Join-Path '_site' '.nojekyll') -Force | Out-Null
+          # Reset native command exit code so the step does not fail on rc 1..7
+          $global:LASTEXITCODE = 0
+          exit 0
 
       - name: Break any hardlinks in _site
         shell: powershell
