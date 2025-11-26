@@ -34,7 +34,33 @@ jobs:
         shell: bash
         run: chmod +x ./scripts/health-check.sh
 
-      - name: Run health check and allow push
+      - name: Resolve Git Bash path (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $candidates = @(
+            "$env:ProgramFiles\Git\bin\bash.exe",
+            "$env:ProgramFiles\Git\usr\bin\bash.exe",
+            "$env:ProgramFiles(x86)\Git\bin\bash.exe",
+            "$env:ProgramFiles(x86)\Git\usr\bin\bash.exe"
+          )
+          $bash = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $bash) {
+            Write-Error "Git Bash not found. Please install Git for Windows or update the workflow with the correct path."
+            exit 1
+          }
+          "GIT_BASH=$bash" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Run health check and allow push (Windows)
+        if: runner.os == 'Windows'
+        env:
+          ALLOW_PUSH: 'true'
+        shell: powershell
+        run: |
+          & "$env:GIT_BASH" ./scripts/health-check.sh
+
+      - name: Run health check and allow push (non-Windows)
+        if: runner.os != 'Windows'
         env:
           ALLOW_PUSH: 'true'
         shell: bash
