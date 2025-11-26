@@ -11,7 +11,7 @@
     -RepoUrl  (example: https://github.com/QuarphixCorp/squadex-status)
     -Version  (runner version, default: 2.329.0)
     -SkipChecksumValidation (switch to skip SHA256 check)
->
+#>
 param(
     [string]$RepoUrl = "https://github.com/QuarphixCorp/squadex-status",
     [string]$Version = "2.329.0",
