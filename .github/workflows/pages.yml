@@ -110,7 +110,29 @@ jobs:
             Write-Error "robocopy failed with code $rc"
             exit 1
           }
+          # Ensure Jekyll processing is disabled
+          New-Item -ItemType File -Path (Join-Path '_site' '.nojekyll') -Force | Out-Null
           exit 0
+
+      - name: Break any hardlinks in _site
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path -LiteralPath '_site')) { Write-Error "_site not found"; exit 1 }
+          $files = Get-ChildItem -LiteralPath '_site' -Recurse -Force -File
+          foreach ($f in $files) {
+            $path = $f.FullName
+            $list = & fsutil hardlink list "$path" 2>$null
+            if ($LASTEXITCODE -ne 0 -or -not $list) { continue }
+            $lines = $list -split "`r?`n" | Where-Object { $_ -and -not ($_ -like 'Hardlink(s)*') }
+            if ($lines.Count -gt 1) {
+              Write-Host "Breaking hardlink: $path (links: $($lines.Count))"
+              $tmp = Join-Path $f.DirectoryName ("{0}.tmp" -f [guid]::NewGuid())
+              Copy-Item -LiteralPath $path -Destination $tmp -Force
+              Remove-Item -LiteralPath $path -Force
+              Move-Item -LiteralPath $tmp -Destination $path -Force
+            }
+          }
 
       - name: Verify artifact content (no links, size <10GB)
         shell: powershell
