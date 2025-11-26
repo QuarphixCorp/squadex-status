@@ -77,7 +77,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: ${{ steps.detect-package-manager-windows.outputs.manager || steps.detect-package-manager-unix.outputs.manager }}
 
       - name: Ensure yarn (Windows)
         if: steps.detect-package-manager-windows.outputs.manager == 'yarn'
