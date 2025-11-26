@@ -90,10 +90,9 @@ jobs:
         shell: powershell
         run: ${{ steps.detect-package-manager.outputs.run_cmd }} export
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: out
           path: ./out
 
   publish:
@@ -103,9 +102,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
