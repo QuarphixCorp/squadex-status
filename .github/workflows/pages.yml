@@ -78,6 +78,30 @@ jobs:
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager-windows.outputs.manager || steps.detect-package-manager-unix.outputs.manager }}
+
+      - name: Ensure yarn (Windows)
+        if: steps.detect-package-manager-windows.outputs.manager == 'yarn'
+        shell: powershell
+        run: |
+          # Install yarn globally if it's not available on the runner
+          if (-not (Get-Command yarn -ErrorAction SilentlyContinue)) {
+            Write-Host "yarn not found — installing via npm"
+            npm install -g yarn
+          } else {
+            Write-Host "yarn already installed"
+          }
+
+      - name: Ensure yarn (Unix)
+        if: steps.detect-package-manager-unix.outputs.manager == 'yarn'
+        shell: bash
+        run: |
+          # Install yarn globally if it's not available on the runner
+          if ! command -v yarn >/dev/null 2>&1; then
+            echo "yarn not found — installing via npm"
+            npm install -g yarn
+          else
+            echo "yarn already installed"
+          fi
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
