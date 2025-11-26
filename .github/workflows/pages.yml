@@ -256,6 +256,26 @@ jobs:
         with:
           path: ./out
 
+      - name: Bash diagnostics (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Write-Host '---- Bash diagnostics ----'
+          Write-Host 'C:\\bin\\bash.exe exists:' (Test-Path 'C:\\bin\\bash.exe')
+          Write-Host 'Where bash (where.exe):'
+          try { & where.exe bash } catch { Write-Host 'where.exe could not find bash' }
+          Write-Host 'Get-Command bash:'
+          try { Get-Command bash -ErrorAction Stop | Format-List } catch { Write-Host 'Get-Command did not find bash' }
+          Write-Host 'Candidate Git Bash locations:'
+          $c = @('C:\\Program Files\\Git\\usr\\bin\\bash.exe','C:\\Program Files (x86)\\Git\\usr\\bin\\bash.exe','C:\\Program Files\\Git\\bin\\bash.exe')
+          foreach ($p in $c) { Write-Host $p (Test-Path $p) }
+          Write-Host 'Effective PATH (first 5 entries):'
+          $env:PATH -split ';' | Select-Object -First 5 | ForEach-Object { Write-Host $_ }
+          if (Test-Path 'C:\\bin\\bash.exe') {
+            try { & 'C:\\bin\\bash.exe' --version } catch { Write-Host 'Failed to run C:\\bin\\bash.exe' }
+          }
+          Write-Host '---- end diagnostics ----'
+
   # Deployment job
   deploy:
     environment:
