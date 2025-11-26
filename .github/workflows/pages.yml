@@ -39,7 +39,15 @@ jobs:
       - name: Install dependencies
         shell: powershell
         run: |
-          npm ci || npm install
+          if (Test-Path -LiteralPath 'package-lock.json') {
+            npm ci
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host 'npm ci failed, falling back to npm install'
+              npm install
+            }
+          } else {
+            npm install
+          }
 
       - name: Build with Next.js
         shell: powershell
