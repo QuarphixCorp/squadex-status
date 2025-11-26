@@ -84,10 +84,10 @@ jobs:
         run: |
           # Install yarn globally if it's not available on the runner
           if (-not (Get-Command yarn -ErrorAction SilentlyContinue)) {
-            Write-Host "yarn not found — installing via npm"
+            Write-Host 'yarn not found - installing via npm'
             npm install -g yarn
           } else {
-            Write-Host "yarn already installed"
+            Write-Host 'yarn already installed'
           }
 
       - name: Ensure yarn (Unix)
@@ -96,10 +96,10 @@ jobs:
         run: |
           # Install yarn globally if it's not available on the runner
           if ! command -v yarn >/dev/null 2>&1; then
-            echo "yarn not found — installing via npm"
+            echo 'yarn not found - installing via npm'
             npm install -g yarn
           else
-            echo "yarn already installed"
+            echo 'yarn already installed'
           fi
       - name: Setup Pages
         id: pages
