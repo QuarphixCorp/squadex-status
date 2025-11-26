@@ -94,10 +94,23 @@ jobs:
         shell: powershell
         run: |
           # Create a clean folder that contains only regular files (no symlinks/hardlinks)
-          Remove-Item -Recurse -Force _site -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Path _site | Out-Null
-          robocopy .\out .\_site /MIR | Out-Null
-          if ($LASTEXITCODE -ge 8) { Write-Error "robocopy failed with code $LASTEXITCODE"; exit 1 }
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path -LiteralPath 'out')) {
+            Write-Error "Exported folder 'out' not found. Did 'next export' succeed?"
+            exit 1
+          }
+          if (Test-Path -LiteralPath '_site') {
+            Remove-Item -Recurse -Force '_site'
+          }
+          New-Item -ItemType Directory -Path '_site' | Out-Null
+          robocopy '.\out' '.\_site' /MIR /COPY:DAT /R:2 /W:2
+          $rc = $LASTEXITCODE
+          Write-Host "robocopy exit code: $rc"
+          if ($rc -ge 8) {
+            Write-Error "robocopy failed with code $rc"
+            exit 1
+          }
+          exit 0
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-artifact@v4
