@@ -21,10 +21,12 @@ concurrency:
 
 jobs:
   build:
-    # Use an organization runner group; ensure the group contains Windows runners since this job uses PowerShell.
+    # Use an organization runner group; ensure the group contains runners with the expected OS label.
     runs-on:
       group: ${{ vars.RUNNER_GROUP || 'Default' }}
-      labels: [ self-hosted, Windows ]
+      labels:
+        - self-hosted
+        - "${{ vars.RUNNER_OS_LABEL || 'Windows' }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -150,10 +152,12 @@ jobs:
           path: _site
 
   publish:
-    # Use the same organization runner group for deployment (Windows runner expected)
+    # Use the same organization runner group for deployment (OS label configurable)
     runs-on:
       group: ${{ vars.RUNNER_GROUP || 'Default' }}
-      labels: [ self-hosted, Windows ]
+      labels:
+        - self-hosted
+        - "${{ vars.RUNNER_OS_LABEL || 'Windows' }}"
     needs: package
     environment:
       name: github-pages
