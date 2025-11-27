@@ -1,5 +1,3 @@
-name: Deploy Next.js site to GitHub Pages
-
 on:
   push:
     branches: ["main"]
@@ -17,12 +15,7 @@ concurrency:
 
 jobs:
   build:
-    # Use a self-hosted runner and allow the OS label to be configured via an org/repo variable RUNNER_OS_LABEL.
-    # Set Repository/Org Variable RUNNER_OS_LABEL to one of: Windows, Linux, macOS (or your custom runner label).
-    # Falls back to 'Windows' to match the PowerShell + robocopy/fsutil commands below.
-    runs-on:
-      - self-hosted
-      - ${{ vars.RUNNER_OS_LABEL || 'Windows' }}
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,91 +32,81 @@ jobs:
           static_site_generator: next
 
       - name: Install dependencies
-        shell: powershell
+        shell: bash
         run: |
-          if (Test-Path -LiteralPath 'package-lock.json') {
-            npm ci
-            if ($LASTEXITCODE -ne 0) {
-              Write-Host 'npm ci failed, falling back to npm install'
-              npm install
-            }
-          } else {
+          set -euo pipefail
+          if [ -f package-lock.json ]; then
+            npm ci || npm install
+          else
             npm install
-          }
+          fi
 
-      - name: Build with Next.js
-        shell: powershell
+      - name: Build
+        shell: bash
         run: npm run build
 
-      - name: Static HTML export with Next.js
-        shell: powershell
+      - name: Static HTML export
+        shell: bash
         run: npm run export
 
       - name: Prepare Pages artifact directory (sanitize)
-        shell: powershell
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          if (-not (Test-Path -LiteralPath 'out')) {
-            Write-Error "Exported folder 'out' not found. Did 'npm run export' succeed?"
+          set -Eeuo pipefail
+          if [ ! -d "out" ]; then
+            echo "Exported folder 'out' not found. Did 'npm run export' succeed?" >&2
             exit 1
-          }
-          if (Test-Path -LiteralPath '_site') {
-            Remove-Item -Recurse -Force '_site'
-          }
-          New-Item -ItemType Directory -Path '_site' | Out-Null
-          # Run robocopy via cmd to capture exit code reliably
-          cmd /c robocopy ".\out" ".\_site" /MIR /COPY:DAT /R:2 /W:2 | Out-Null
-          $rc = $LASTEXITCODE
-          Write-Host "robocopy exit code: $rc"
-          if ($rc -ge 8) {
-            Write-Error "robocopy failed with code $rc"
-            exit 1
-          }
+          fi
+          rm -rf _site
+          mkdir -p _site
+          # Prefer rsync if available, else fallback to cp -a
+          if command -v rsync >/dev/null 2>&1; then
+            rsync -a --delete "out/" "_site/"
+          else
+            cp -a out/. _site/
+          fi
           # Ensure Jekyll processing is disabled
-          New-Item -ItemType File -Path (Join-Path '_site' '.nojekyll') -Force | Out-Null
-          # Reset native command exit code so the step does not fail on rc 1..7
-          $global:LASTEXITCODE = 0
-          exit 0
+          touch "_site/.nojekyll"
 
       - name: Break any hardlinks in _site
-        shell: powershell
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          if (-not (Test-Path -LiteralPath '_site')) { Write-Error "_site not found"; exit 1 }
-          $files = Get-ChildItem -LiteralPath '_site' -Recurse -Force -File
-          foreach ($f in $files) {
-            $path = $f.FullName
-            $list = & fsutil hardlink list "$path" 2>$null
-            if ($LASTEXITCODE -ne 0 -or -not $list) { continue }
-            $lines = $list -split "`r?`n" | Where-Object { $_ -and -not ($_ -like 'Hardlink(s)*') }
-            if ($lines.Count -gt 1) {
-              Write-Host "Breaking hardlink: $path (links: $($lines.Count))"
-              $tmp = Join-Path $f.DirectoryName ("{0}.tmp" -f [guid]::NewGuid())
-              Copy-Item -LiteralPath $path -Destination $tmp -Force
-              Remove-Item -LiteralPath $path -Force
-              Move-Item -LiteralPath $tmp -Destination $path -Force
-            }
-          }
+          set -Eeuo pipefail
+          if [ ! -d "_site" ]; then
+            echo "_site not found" >&2
+            exit 1
+          fi
+          # Rewrite each regular file to ensure it is not a hardlink
+          find "_site" -type f -print0 | while IFS= read -r -d '' f; do
+            tmp="${f}.tmp.$$"
+            cp -p "$f" "$tmp" && mv -f "$tmp" "$f"
+          done
 
       - name: Verify artifact content (no links, size <10GB)
-        shell: powershell
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          if (-not (Test-Path -LiteralPath '_site')) { Write-Error "_site not found"; exit 1 }
-          $links = Get-ChildItem -LiteralPath '_site' -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }
-          if ($links -and $links.Count -gt 0) {
-            Write-Host "Found reparse points (symlinks/junctions), these are not allowed:"
-            $links | ForEach-Object { Write-Host " - $($_.FullName)" }
-            Write-Error "Artifact contains links."
+          set -Eeuo pipefail
+          if [ ! -d "_site" ]; then
+            echo "_site not found" >&2
             exit 1
-          }
-          $sizeBytes = (Get-ChildItem -LiteralPath '_site' -Recurse -Force -File | Measure-Object -Property Length -Sum).Sum
-          $sizeGB = [math]::Round(($sizeBytes / 1GB), 3)
-          Write-Host ("Artifact size: {0} bytes (~{1} GB)" -f $sizeBytes, $sizeGB)
-          if ($sizeBytes -gt 9.5GB) {
-            Write-Error "Artifact too large (>10GB limit)."
+          fi
+          # Fail if any symlinks are present
+          mapfile -t links < <(find "_site" -type l)
+          if [ ${#links[@]} -gt 0 ]; then
+            echo "Found symlinks, these are not allowed:" >&2
+            for l in "${links[@]}"; do echo " - $l"; done
+            echo "Artifact contains links." >&2
             exit 1
-          }
+          fi
+          # Compute size in bytes and ensure < 10 GiB
+          sizeBytes=$(du -sb "_site" | cut -f1)
+          sizeGB=$(awk -v s="$sizeBytes" 'BEGIN { printf "%.3f", s/1073741824 }')
+          echo "Artifact size: ${sizeBytes} bytes (~${sizeGB} GiB)"
+          limit=$((10*1024*1024*1024))
+          if [ "$sizeBytes" -gt "$limit" ]; then
+            echo "Artifact too large (>=10 GiB limit)." >&2
+            exit 1
+          fi
 
       - name: Upload build as generic artifact
         uses: actions/upload-artifact@v4
@@ -132,8 +115,7 @@ jobs:
           path: ./_site
 
   package:
-    # Use GitHub-hosted Ubuntu for packaging to ensure bash/gnu-tar availability
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     steps:
       - name: Download site artifact
@@ -148,10 +130,7 @@ jobs:
           path: _site
 
   publish:
-    # Same configurable self-hosted OS label logic as in the build job.
-    runs-on:
-      - self-hosted
-      - ${{ vars.RUNNER_OS_LABEL || 'Windows' }}
+    runs-on: self-hosted
     needs: package
     environment:
       name: github-pages

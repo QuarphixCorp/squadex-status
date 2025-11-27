@@ -74,26 +74,4 @@ update the cron time in the following line.
 
 - Incidents
     - Github issue is used for incident management.
-
-# Contributing
-Feel free to submit pull requests and/or file issues for bugs and suggestions.
-# squadEx
-
-## Self-hosted runner (optional)
-
-If you'd rather run builds on your own machine instead of GitHub-hosted runners, this repo includes a small helper under `actions-runner/` to configure a self-hosted runner.
-
-- Windows helper: `actions-runner/setup-runner.ps1` — PowerShell script that downloads the official runner package, validates the SHA256 for the bundled version, extracts it, and runs `config.cmd` (it prompts for the registration token). Recommended install folder: `C:\actions-runner` to avoid long-path issues.
-
-- Linux/macOS helper: `actions-runner/setup-runner.sh` — a small shell script (not included by default) to perform the same steps on Unix-like systems.
-
-After configuring a runner, use labels in workflows to target it. Example (Windows):
-
-```yaml
-runs-on: [self-hosted, windows, x64]
 ```
-
-Troubleshooting tips:
-- Run the setup as an Administrator (Windows) or with an account that can register services.
-- If Actions shows "Waiting for a runner", verify the runner is online and that the workflow's labels match the runner's labels (Repo → Settings → Actions → Runners).
-- If Next.js build fails on Windows with file-lock errors, try installing the runner on a folder at the drive root and whitelist it in antivirus.
