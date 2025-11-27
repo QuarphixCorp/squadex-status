@@ -1,7 +1,3 @@
-# Sample workflow for building and deploying a Next.js site to GitHub Pages
-#
-# To get started with Next.js see: https://nextjs.org/docs/getting-started
-#
 name: Deploy Next.js site to GitHub Pages
 
 on:
@@ -136,8 +132,9 @@ jobs:
           path: ./_site
 
   package:
-    # Use GitHub-hosted Ubuntu for packaging to ensure bash/gnu-tar availability
-    runs-on: ubuntu-latest
+    # Use self-hosted runner for packaging
+    runs-on:
+      - self-hosted
     needs: build
     steps:
       - name: Download site artifact
@@ -152,12 +149,9 @@ jobs:
           path: _site
 
   publish:
-    # Use the same organization runner group for deployment (OS label configurable)
+    # GitHub Pages deployment must run on a self-hosted runner
     runs-on:
-      group: ${{ vars.RUNNER_GROUP || 'Default' }}
-      labels:
-        - self-hosted
-        - "${{ vars.RUNNER_OS_LABEL || 'Windows' }}"
+      - self-hosted
     needs: package
     environment:
       name: github-pages
