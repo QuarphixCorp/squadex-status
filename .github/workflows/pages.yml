@@ -17,7 +17,12 @@ concurrency:
 
 jobs:
   build:
-    runs-on: self-hosted
+    # Use a self-hosted runner and allow the OS label to be configured via an org/repo variable RUNNER_OS_LABEL.
+    # Set Repository/Org Variable RUNNER_OS_LABEL to one of: Windows, Linux, macOS (or your custom runner label).
+    # Falls back to 'Windows' to match the PowerShell + robocopy/fsutil commands below.
+    runs-on:
+      - self-hosted
+      - ${{ vars.RUNNER_OS_LABEL || 'Windows' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -143,7 +148,10 @@ jobs:
           path: _site
 
   publish:
-    runs-on: self-hosted
+    # Same configurable self-hosted OS label logic as in the build job.
+    runs-on:
+      - self-hosted
+      - ${{ vars.RUNNER_OS_LABEL || 'Windows' }}
     needs: package
     environment:
       name: github-pages
