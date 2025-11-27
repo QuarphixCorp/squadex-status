@@ -77,25 +77,23 @@ update the cron time in the following line.
 
 # Contributing
 Feel free to submit pull requests and/or file issues for bugs and suggestions.
+# squadEx
 
-## Using organization runner groups
+## Self-hosted runner (optional)
 
-If your GitHub organization already has self-hosted runners in a runner group, you can use them without configuring a local runner in this repo.
+If you'd rather run builds on your own machine instead of GitHub-hosted runners, this repo includes a small helper under `actions-runner/` to configure a self-hosted runner.
 
-What to do:
+- Windows helper: `actions-runner/setup-runner.ps1` — PowerShell script that downloads the official runner package, validates the SHA256 for the bundled version, extracts it, and runs `config.cmd` (it prompts for the registration token). Recommended install folder: `C:\actions-runner` to avoid long-path issues.
 
-- Ensure the runner group is granted access to this repository (Org settings → Actions → Runners → Runner groups).
-- Create a repository (or organization) variable named `RUNNER_GROUP` with the exact runner group name.
-- The workflows in `.github/workflows/` are configured to target that group:
+- Linux/macOS helper: `actions-runner/setup-runner.sh` — a small shell script (not included by default) to perform the same steps on Unix-like systems.
 
-    - `health-check.yml` uses:
-        - runs-on.group: `${{ vars.RUNNER_GROUP || 'Default' }}`
-        - labels: `[ self-hosted ]`
+After configuring a runner, use labels in workflows to target it. Example (Windows):
 
-    - `pages.yml` build/publish jobs use Windows runners because the steps use PowerShell:
-        - runs-on.group: `${{ vars.RUNNER_GROUP || 'Default' }}`
-        - labels: `[ self-hosted, Windows ]`
+```yaml
+runs-on: [self-hosted, windows, x64]
+```
 
-Notes:
-- If your runner group only has Linux runners, switch PowerShell steps in `pages.yml` to `bash` or install PowerShell 7 on the runners and keep the `Windows` label aligned with your environment.
-- If you prefer a fixed group name in code, replace `${{ vars.RUNNER_GROUP || 'Default' }}` with your group name string.
+Troubleshooting tips:
+- Run the setup as an Administrator (Windows) or with an account that can register services.
+- If Actions shows "Waiting for a runner", verify the runner is online and that the workflow's labels match the runner's labels (Repo → Settings → Actions → Runners).
+- If Next.js build fails on Windows with file-lock errors, try installing the runner on a folder at the drive root and whitelist it in antivirus.
