@@ -21,7 +21,11 @@ permissions:
 
 jobs:
   health-check:
-    runs-on: self-hosted
+    # Use an organization runner group instead of a local runner.
+    # Set repo/org variable RUNNER_GROUP to the target group name, or it will fall back to 'Default'.
+    runs-on:
+      group: ${{ vars.RUNNER_GROUP || 'Default' }}
+      labels: [ self-hosted ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4

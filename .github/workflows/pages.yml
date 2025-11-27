@@ -21,7 +21,10 @@ concurrency:
 
 jobs:
   build:
-    runs-on: self-hosted
+    # Use an organization runner group; ensure the group contains Windows runners since this job uses PowerShell.
+    runs-on:
+      group: ${{ vars.RUNNER_GROUP || 'Default' }}
+      labels: [ self-hosted, Windows ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -147,7 +150,10 @@ jobs:
           path: _site
 
   publish:
-    runs-on: self-hosted
+    # Use the same organization runner group for deployment (Windows runner expected)
+    runs-on:
+      group: ${{ vars.RUNNER_GROUP || 'Default' }}
+      labels: [ self-hosted, Windows ]
     needs: package
     environment:
       name: github-pages
