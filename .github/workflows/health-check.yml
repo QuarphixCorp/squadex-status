@@ -3,13 +3,10 @@ name: Scheduled Health Check
 on:
   schedule:
     - cron: "0 0/12 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch: { }
   push:
     branches:
       - main
-    paths:
-      - '.github/workflows/health-check.yml'
-      - 'scripts/health-check.sh'
 
 concurrency:
   group: health-check
@@ -24,14 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          # allow the action to use the supplied token to push
-          persist-credentials: true
-
-      - name: Give execute permission to script
-        shell: bash
-        run: chmod +x ./scripts/health-check.sh
-
       - name: Run health check and allow push
         env:
           ALLOW_PUSH: 'true'
