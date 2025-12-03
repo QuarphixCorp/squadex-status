@@ -1,7 +1,4 @@
 /** @type {import('next').NextConfig} */
-// NOTE: Avoid optional chaining / modern syntax so GitHub Actions (espree) parser can read this file.
-// When building on GitHub Pages for a repository (project) site, assets must be served under /<repoName>/.
-// We derive repoName defensively to keep the parser happy.
 var repoName = "";
 if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
   var parts = process.env.GITHUB_REPOSITORY.split("/");
