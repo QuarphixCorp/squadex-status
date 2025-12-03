@@ -3,27 +3,13 @@ name: Scheduled Health Check
 on:
   schedule:
     - cron: "0 0/12 * * *"
-  workflow_dispatch: { }
-  push:
-    branches:
-      - main
-
-concurrency:
-  group: health-check
-  cancel-in-progress: true
-
-permissions:
-  contents: write
 
 jobs:
-  health-check:
+  health_check_job:
     runs-on: self-hosted
+    name: Check all sites
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Run health check and allow push
-        env:
-          ALLOW_PUSH: 'true'
-        shell: bash
-        run: |
-          bash ./scripts/health-check.sh
+      - uses: actions/checkout@v4
+      - name: Run Shell Script
+        id: shell_script_run
+        run: bash ./scripts/health-check.sh
