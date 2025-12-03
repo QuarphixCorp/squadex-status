@@ -1,7 +1,7 @@
 
 # SquadEx Status
 
-**Fettle** is the open-source status page, powered entirely by GitHub Actions, Issues, and Pages.
+**SquadEx** is the open-source status page, powered entirely by GitHub Actions, Issues, and Pages.
 
 <img src="./public/ss.png" />
 
@@ -20,7 +20,7 @@ Facebook=https://facebook.com
 ## Incidents URL update
 Go to `src > incidents > hooks > useIncidents.tsx` file and update the url with your repository url.
 
-Replace **mehatab/fettle** with your **username/repo-name**
+Replace **QuarphixCorp/SquadEx** with your **username/repo-name**
 ```
 https://api.github.com/repos/QuarphixCorp/squadex-status/issues?per_page=20&state=all&labels=incident
 ```
@@ -28,14 +28,14 @@ https://api.github.com/repos/QuarphixCorp/squadex-status/issues?per_page=20&stat
 ## Service status URL update
 Go to `src > services > hooks > useServices.tsx` file and update the url with your repository url.
 
-Replace **mehatab/fettle** with your **username/repo-name**
+Replace **QuarphixCorp/SquadEx** with your **username/repo-name**
 ```
 https://raw.githubusercontent.com/QuarphixCorp/squadex-status/main/public/status/${key}_report.log
 ```
 
 Go to `src > services > hooks > useSystemStatus.tsx` file and update the url with your repository url.
 
-Replace **mehatab/fettle** with your **username/repo-name**
+Replace **QuarphixCorp/SquadEx** with your **username/repo-name**
 ```
 https://raw.githubusercontent.com/QuarphixCorp/squadex-status/main/public/status/${key}_report.log
 ```
