@@ -40,3 +40,6 @@ next-env.d.ts
 
 /logs
 .idea
+ 
+# Ignore status logs
+public/status/*.log
