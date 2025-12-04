@@ -11,11 +11,7 @@ function useIncidents() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch("https://api.github.com/repos/QuarphixCorp/squadex-status/issues?per_page=100&state=all&labels=incident,bug,enhancement", {
-                    headers: {
-                        Accept: "application/vnd.github.v3+json"
-                    }
-                });
+                const response = await fetch("https://api.github.com/repos/mehatab/fettle/issues?per_page=20&state=all&labels=incident");
                 const issues = await response.json();
                 console.log('issues', issues)
                 const monthlyIncident = devideMonthly(issues.map((issue: any) => ({
