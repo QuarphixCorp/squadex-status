@@ -8,7 +8,7 @@ var basePath = repoName ? "/" + repoName : "";
 
 module.exports = {
   basePath: basePath,
-  assetPrefix: basePath + "/",
+  assetPrefix: basePath || "/",
   reactStrictMode: true,
   swcMinify: true,
   // Removed images.unoptimized because we replaced next/image with standard <img> for static export.

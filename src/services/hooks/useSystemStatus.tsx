@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { Status } from "../../utils/constants";
 import ServiceStatus from "../types/ServiceStatus";
 import SystemStatus from "../types/SystemStatus";
 
 function useSystemStatus() {
+    const router = useRouter();
     const [systemStatus, setSystemStatus] = useState<SystemStatus>();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState();
@@ -12,9 +14,8 @@ function useSystemStatus() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                // urls.cfg lives in the public folder. Use a relative path so the app works
-                // when served from a subpath (GitHub Pages, GitHub project pages, etc.).
-                const response = await fetch("./urls.cfg");
+                const basePath = router.basePath || "";
+                const response = await fetch(`${basePath}/urls.cfg`);
                 const configText = await response.text();
                 const configLines = configText.split("\n");
                 const services: ServiceStatus[] = [];
@@ -24,7 +25,7 @@ function useSystemStatus() {
                     if (!key || !url) {
                         continue;
                     }
-                    const status = await logs(key);
+                    const status = await logs(key, basePath);
 
                     services.push(status);
                 }
@@ -66,10 +67,10 @@ function useSystemStatus() {
     return {systemStatus, isLoading, error};
 }
 
-async function logs(key: string): Promise<ServiceStatus> {
-    // read logs from the local public/status folder. Use a relative path so the
+async function logs(key: string, basePath: string): Promise<ServiceStatus> {
+    // read logs from the local public/status folder. Use basePath so the
     // files are correctly resolved when the site is hosted under a subpath.
-    const resp = await fetch(`./status/${key}_report.log`);
+    const resp = await fetch(`${basePath}/status/${key}_report.log`);
     if (!resp.ok) {
         // missing or inaccessible log -> treat as unknown/empty so it doesn't incorrectly count as a failed service
         return {

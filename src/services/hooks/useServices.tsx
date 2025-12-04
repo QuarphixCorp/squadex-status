@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import Service from '../types/Service';
 import Log from "../types/Log";
 import LogDaySummary from "../types/LogDaySummary";
 import { Status } from "../../utils/constants";
 
 function useServices() {
+    const router = useRouter();
     const [data, setData] = useState<Service[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState();
@@ -13,10 +15,10 @@ function useServices() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                // use relative path so this works when the site is hosted under a subpath
-                // (GitHub Pages project sites). This matches how `useSystemStatus` loads
-                // the same file from `public/`.
-                const response = await fetch("./urls.cfg");
+                // use basePath from router so this works when deployed under a subpath
+                // (GitHub Pages project sites, or locally)
+                const basePath = router.basePath || "";
+                const response = await fetch(`${basePath}/urls.cfg`);
                 const configText = await response.text();
                 const configLines = configText.split("\n");
 
@@ -27,7 +29,7 @@ function useServices() {
                     if (!key || !url) {
                         continue;
                     }
-                    const log = await logs(key);
+                    const log = await logs(key, basePath);
 
                     if (log.length > 0) {
                         services.push({ id: ii, name: key, status: log[log.length - 1].status, logs: log })
@@ -43,15 +45,15 @@ function useServices() {
             }
         };
         loadData();
-    }, []);
+    }, [router.basePath]);
 
     return [data, isLoading, error];
 }
 
-async function logs(key: string): Promise<LogDaySummary[]> {
-    // read logs from the local public/status folder. Use a relative path so the
+async function logs(key: string, basePath: string): Promise<LogDaySummary[]> {
+    // read logs from the local public/status folder. Use basePath so the
     // files are correctly resolved when the site is hosted under a subpath.
-    const resp = await fetch(`./status/${key}_report.log`);
+    const resp = await fetch(`${basePath}/status/${key}_report.log`);
     if (!resp.ok) {
         // missing or inaccessible log -> return empty array so callers treat it as unknown
         return [];
