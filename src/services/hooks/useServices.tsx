@@ -15,9 +15,10 @@ function useServices() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                // use basePath from router so this works when deployed under a subpath
-                // (GitHub Pages project sites, or locally)
+                // Get basePath from router - this is set in next.config.js for GitHub Pages
                 const basePath = router.basePath || "";
+                // use basePath so this works when the site is hosted under a subpath
+                // (GitHub Pages project sites)
                 const response = await fetch(`${basePath}/urls.cfg`);
                 const configText = await response.text();
                 const configLines = configText.split("\n");
@@ -51,8 +52,8 @@ function useServices() {
 }
 
 async function logs(key: string, basePath: string): Promise<LogDaySummary[]> {
-    // read logs from the local public/status folder. Use basePath so the
-    // files are correctly resolved when the site is hosted under a subpath.
+    // read logs from the local public/status folder. Use basePath to work with
+    // GitHub Pages subpaths.
     const resp = await fetch(`${basePath}/status/${key}_report.log`);
     if (!resp.ok) {
         // missing or inaccessible log -> return empty array so callers treat it as unknown

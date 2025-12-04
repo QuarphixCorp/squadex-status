@@ -14,7 +14,9 @@ function useSystemStatus() {
         const loadData = async () => {
             setIsLoading(true);
             try {
+                // Get basePath from router - this is set in next.config.js for GitHub Pages
                 const basePath = router.basePath || "";
+                // urls.cfg lives in the public folder. The basePath is prepended automatically by Next.js
                 const response = await fetch(`${basePath}/urls.cfg`);
                 const configText = await response.text();
                 const configLines = configText.split("\n");
@@ -62,14 +64,14 @@ function useSystemStatus() {
             }
         };
         loadData();
-    }, []);
+    }, [router.basePath]);
 
     return {systemStatus, isLoading, error};
 }
 
 async function logs(key: string, basePath: string): Promise<ServiceStatus> {
-    // read logs from the local public/status folder. Use basePath so the
-    // files are correctly resolved when the site is hosted under a subpath.
+    // read logs from the local public/status folder. Use basePath to work with
+    // GitHub Pages subpaths.
     const resp = await fetch(`${basePath}/status/${key}_report.log`);
     if (!resp.ok) {
         // missing or inaccessible log -> treat as unknown/empty so it doesn't incorrectly count as a failed service
