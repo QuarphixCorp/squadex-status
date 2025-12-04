@@ -11,7 +11,16 @@ function useIncidents() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch("https://api.github.com/repos/mehatab/fettle/issues?per_page=20&state=all&labels=incident");
+                const response = await fetch("https://api.github.com/repos/QuarphixCorp/squadex-status/issues?per_page=20&state=all&labels=incident", {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+                
                 const issues = await response.json();
                 console.log('issues', issues)
                 const monthlyIncident = devideMonthly(issues.map((issue: any) => ({
@@ -26,6 +35,7 @@ function useIncidents() {
                 console.log('issues', monthlyIncident)
                 setData(monthlyIncident);
             } catch (e: any) {
+                console.error('Error loading incidents:', e);
                 setError(e);
             } finally {
                 setIsLoading(false);

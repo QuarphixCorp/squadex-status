@@ -4,7 +4,7 @@ import Incidents from "./types/Incident";
 import MonthlyIncident from "./types/MonthlyIncident";
 
 const IncidentsSection: NextPage = () => {
-	const [monthlyIncidents, isIncidentsLoading] = useIncidents();
+	const [monthlyIncidents, isIncidentsLoading, error] = useIncidents();
 
 	const formatDate = (date: string) => {
 		return new Date(date).toLocaleString([], {
@@ -19,6 +19,12 @@ const IncidentsSection: NextPage = () => {
 		<div className="mt-5">
 			{isIncidentsLoading ? (
 				<p>Loading...</p>
+			) : error ? (
+				<div className="bg-red-50 border border-red-200 rounded p-4">
+					<p className="text-red-800">Failed to load incidents. Please check the browser console for details.</p>
+				</div>
+			) : (monthlyIncidents as MonthlyIncident[]).length === 0 ? (
+				<p className="text-gray-500">No incidents found.</p>
 			) : (
 				<div>
 					{(monthlyIncidents as MonthlyIncident[]).map((incidents) => (
