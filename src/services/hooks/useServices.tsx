@@ -52,11 +52,16 @@ function useServices() {
 }
 
 async function logs(key: string, basePath: string): Promise<LogDaySummary[]> {
-    // read logs from the local public/status folder. Use basePath to work with
-    // GitHub Pages subpaths.
-    const resp = await fetch(`${basePath}/status/${key}_report.log`);
+    let resp = await fetch(`${basePath}/status/${key}_report.log`);
     if (!resp.ok) {
-        // missing or inaccessible log -> return empty array so callers treat it as unknown
+        try {
+            const rawUrl = `https://raw.githubusercontent.com/QuarphixCorp/squadex-status/main/public/status/${key}_report.log`;
+            resp = await fetch(rawUrl);
+        } catch (e) {
+        }
+    }
+
+    if (!resp.ok) {
         return [];
     }
     const text = await resp.text();
