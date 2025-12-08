@@ -57,7 +57,10 @@ for (( index=0; index < ${#KEYSARRAY[@]}; index++ )); do
 
     if [ "$curl_exit" -ne 0 ]; then
       err_msg="$(sed -n '1,10p' "$tmp_err" 2>/dev/null | tr -d '\n')"
-      echo -e "    \033[31mERROR (curl exit $curl_exit): ${err_msg:-unknown error}\033[0m"
+      # Clean common curl prefixes like: "curl: (7) Failed to connect..." or "curl: Failed to ..."
+      clean_msg="$(echo "$err_msg" | sed -E 's/^curl: *\([0-9]+\) *//; s/^curl: *//; s/^[[:space:]]*//; s/[[:space:]]*$//')"
+      # Print only the cleaned message (or a fallback)
+      echo "    ${clean_msg:-unknown error}"
       result="failed"
       sleep 2
       rm -f "$tmp_err"
@@ -92,11 +95,10 @@ if [[ $commit == true ]]; then
   echo "committing logs"
   git config user.name 'github-actions[bot]'
   git config user.email 'github-actions[bot]@users.noreply.github.com'
-  git add -A --force public/status/ || echo "git add failed (continuing)"
-  # commit may exit non-zero when there are no changes; don't abort the script
-  git commit -am '[Automated] Update Health Check Logs' || echo "git commit had no changes or failed (continuing)"
-  git push || echo "git push failed (continuing)"
+  git add -A --force public/status/ 
+  git commit -am '[Automated] Update Health Check Logs'
+  git pull -X theirs origin main
+  git push origin main
 fi
 
-# exit zero so callers (cron/GitHub Actions runner) don't treat connection failures as script failure
 exit 0
