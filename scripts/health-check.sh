@@ -96,9 +96,14 @@ if [[ $commit == true ]]; then
   git config user.name 'github-actions[bot]'
   git config user.email 'github-actions[bot]@users.noreply.github.com'
   git add -A --force public/status/ 
-  git commit -am '[Automated] Update Health Check Logs'
-  git pull -X theirs origin main
-  git push origin main
+  git commit -am '[Automated] Update Health Check Logs' || true
+
+  if ! git pull --no-edit -X theirs origin main; then
+    git fetch origin main
+    git merge --no-edit -X theirs origin/main || true
+  fi
+
+  git push origin main || true
 fi
 
 exit 0
